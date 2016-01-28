@@ -50,9 +50,14 @@ public class SampleActivity extends AppCompatActivity {
             }
         });
 
-        if (savedInstanceState == null) {
-            useHud();
-        }
+        useHud();
+    }
+
+    @Override
+    protected void onDestroy() {
+        HudManager.removeAll(this);
+
+        super.onDestroy();
     }
 
     private void useHud() {
