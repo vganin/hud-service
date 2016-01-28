@@ -15,7 +15,9 @@ import java.util.Random;
 
 public class SampleActivity extends AppCompatActivity {
 
-    private final String[] data = new String[] {
+    private static final int PROVERB_UPDATE_PERIOD = 10000;
+
+    private final String[] proverbs = new String[] {
             "Two wrongs don't make a right.",
             "The pen is mightier than the sword.",
             "When in Rome, do as the Romans.",
@@ -28,6 +30,8 @@ public class SampleActivity extends AppCompatActivity {
     private Hud counterHud;
 
     private int counter = 0;
+    private int proverbIndex = 0;
+    private long lastProverbUpdate = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,12 +68,16 @@ public class SampleActivity extends AppCompatActivity {
     }
 
     private static final String STATE_COUNTER = "counter";
+    private static final String STATE_PROVERB_INDEX = "proverb_index";
+    private static final String STATE_LAST_PROVERB_UPDATE = "last_proverb_update";
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
         outState.putInt(STATE_COUNTER, counter);
+        outState.putInt(STATE_PROVERB_INDEX, proverbIndex);
+        outState.putLong(STATE_LAST_PROVERB_UPDATE, lastProverbUpdate);
     }
 
     @Override
@@ -77,6 +85,8 @@ public class SampleActivity extends AppCompatActivity {
         super.onRestoreInstanceState(savedInstanceState);
 
         counter = savedInstanceState.getInt(STATE_COUNTER, 0);
+        proverbIndex = savedInstanceState.getInt(STATE_PROVERB_INDEX, proverbIndex);
+        lastProverbUpdate = savedInstanceState.getLong(STATE_LAST_PROVERB_UPDATE, lastProverbUpdate);
     }
 
     private void useHud() {
@@ -89,7 +99,9 @@ public class SampleActivity extends AppCompatActivity {
 
             @Override
             public RemoteViews getUpdate() {
-                remoteView.setCharSequence(R.id.text, "setText", data[rand.nextInt(data.length)]);
+                updateTextIfNeeded();
+
+                remoteView.setCharSequence(R.id.text, "setText", proverbs[proverbIndex]);
                 remoteView.setInt(R.id.icon, "setImageLevel", rotation);
 
                 rotation -= 1000;
@@ -101,6 +113,15 @@ public class SampleActivity extends AppCompatActivity {
             @Override
             public int getUpdatePeriod() {
                 return Hud.MINIMUM_UPDATE_PERIOD;
+            }
+
+            private void updateTextIfNeeded() {
+                if (System.currentTimeMillis() - lastProverbUpdate > PROVERB_UPDATE_PERIOD) {
+                    int newProverbIndex = rand.nextInt(proverbs.length - 1);
+                    proverbIndex = newProverbIndex == proverbIndex
+                            ? proverbs.length - 1 : newProverbIndex;
+                    lastProverbUpdate = System.currentTimeMillis();
+                }
             }
         });
 
