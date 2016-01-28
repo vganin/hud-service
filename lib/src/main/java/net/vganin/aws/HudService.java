@@ -158,7 +158,7 @@ public final class HudService extends Service {
         super.onDestroy();
     }
 
-    public void viewsUpdate() {
+    private void viewsUpdate() {
         root.removeAllViews();
 
         Collection<IncomingHandler.DeathAwareView> remoteViews = hudHandler.remoteViews.values();
@@ -171,7 +171,7 @@ public final class HudService extends Service {
         }
     }
 
-    public void visibilityUpdate() {
+    private void visibilityUpdate() {
         root.setVisibility(hudHandler.viewsAreShown ? View.VISIBLE : View.GONE);
     }
 
