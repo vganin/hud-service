@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">AlertWindowServiceSample</string>
     <string name="title_activity_sample">SampleActivity</string>
+
+    <string name="toggle_hud_visibility">Toggle HUD visibility</string>
 </resources>

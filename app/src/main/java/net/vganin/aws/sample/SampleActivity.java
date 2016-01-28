@@ -41,6 +41,13 @@ public class SampleActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.toggle_hud_visibility).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggleHudVisibility();
+            }
+        });
+
         if (savedInstanceState == null) {
             useHud();
         }
@@ -65,5 +72,9 @@ public class SampleActivity extends AppCompatActivity {
                 return remoteView;
             }
         });
+    }
+
+    private void toggleHudVisibility() {
+        HudManager.toggleVisibility(this);
     }
 }
