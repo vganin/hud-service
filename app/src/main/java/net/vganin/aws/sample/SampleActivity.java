@@ -62,7 +62,7 @@ public class SampleActivity extends AppCompatActivity {
                 remoteView.setCharSequence(R.id.text, "setText", data[rand.nextInt(data.length)]);
                 remoteView.setInt(R.id.icon, "setImageLevel", rotation);
 
-                rotation += 1250; // RotateDrawable.MAX_LEVEL / 8
+                rotation -= 1000;
                 rotation %= 10000; // RotateDrawable.MAX_LEVEL
 
                 return remoteView;
