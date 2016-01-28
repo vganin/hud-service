@@ -59,8 +59,6 @@ public final class HudManager {
         }
     };
 
-    private static final int UPDATE_DELAY = 1000;
-
     private static final ScheduledExecutorService EXECUTOR =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -144,6 +142,23 @@ public final class HudManager {
         }
     }
 
+    /**
+     * Requests to update this HUD immediately, ignoring its update period returned by
+     * {@link Hud#getUpdatePeriod()} for this moment.
+     *
+     * @param ctx Context.
+     * @param hud HUD implementation.
+     */
+    @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
+    public static void requestImmediateUpdate(Context ctx, final Hud hud) {
+        executeConnectionDependentAction(ctx, new Runnable() {
+            @Override
+            public void run() {
+                postUpdate(hud);
+            }
+        });
+    }
+
     private static void connect(Context ctx) {
         ctx.getApplicationContext().bindService(
                 new Intent(ctx, HudService.class),
@@ -194,10 +209,17 @@ public final class HudManager {
     }
 
     private static void schedule(Hud hud) {
-        ScheduledFuture future = EXECUTOR.scheduleWithFixedDelay(
-                new MessageWorker(messenger, hud), 0, UPDATE_DELAY, TimeUnit.MILLISECONDS);
+        Runnable work = new MessageWorker(messenger, hud);
 
-        SCHEDULED.put(hud, future);
+        if (hud.getUpdatePeriod() == Hud.NO_PERIODIC_UPDATE) {
+            EXECUTOR.execute(work);
+        } else {
+            int updateDelay = Math.max(hud.getUpdatePeriod(), Hud.MINIMUM_UPDATE_PERIOD);
+
+            ScheduledFuture future = EXECUTOR.scheduleWithFixedDelay(
+                    work, 0, updateDelay, TimeUnit.MILLISECONDS);
+            SCHEDULED.put(hud, future);
+        }
     }
 
     private static void cancel(Hud hud) {

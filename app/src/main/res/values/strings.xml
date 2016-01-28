@@ -3,4 +3,5 @@
     <string name="title_activity_sample">SampleActivity</string>
 
     <string name="toggle_hud_visibility">Toggle HUD visibility</string>
+    <string name="add_to_counter">Increment counter</string>
 </resources>

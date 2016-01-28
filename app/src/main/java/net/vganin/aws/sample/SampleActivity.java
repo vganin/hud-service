@@ -25,6 +25,10 @@ public class SampleActivity extends AppCompatActivity {
 
     private final Random rand = new Random();
 
+    private Hud counterHud;
+
+    private int counter = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +43,16 @@ public class SampleActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.add_to_counter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                counter++;
+                if (counterHud != null) {
+                    counterHud.requestUpdate(SampleActivity.this);
+                }
+            }
+        });
+
         useHud();
     }
 
@@ -47,6 +61,22 @@ public class SampleActivity extends AppCompatActivity {
         HudManager.removeAll(this);
 
         super.onDestroy();
+    }
+
+    private static final String STATE_COUNTER = "counter";
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(STATE_COUNTER, counter);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        counter = savedInstanceState.getInt(STATE_COUNTER, 0);
     }
 
     private void useHud() {
@@ -67,17 +97,33 @@ public class SampleActivity extends AppCompatActivity {
 
                 return remoteView;
             }
+
+            @Override
+            public int getUpdatePeriod() {
+                return Hud.MINIMUM_UPDATE_PERIOD;
+            }
         });
 
-        HudManager.add(this, new DebugTextHud(this) {
+        counterHud = new DebugTextHud(this) {
+
+            private static final int HALF_MINUTE = 30 * 1000; // ms
+
             @Override
             public CharSequence getMessageUpdate() {
-                return DateUtils.formatDateTime(
+                String update = DateUtils.formatDateTime(
                         SampleActivity.this,
                         System.currentTimeMillis(),
                         DateUtils.FORMAT_SHOW_TIME);
+                update += " Button was pressed " + counter + " times";
+                return update;
             }
-        });
+
+            @Override
+            public int getUpdatePeriod() {
+                return HALF_MINUTE;
+            }
+        };
+        HudManager.add(this, counterHud);
     }
 
     private void toggleHudVisibility() {
