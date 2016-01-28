@@ -1,10 +1,12 @@
 package net.vganin.aws;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.support.annotation.RequiresPermission;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -75,6 +77,7 @@ public final class HudManager {
         return messenger != null;
     }
 
+    @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void add(Context ctx, final Hud hud) {
         executeConnectionDependentAction(ctx, new Runnable() {
             @Override
@@ -84,6 +87,7 @@ public final class HudManager {
         });
     }
 
+    @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void remove(Context ctx, Hud hud) {
         cancel(hud);
 
@@ -96,6 +100,7 @@ public final class HudManager {
         }
     }
 
+    @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void toggleVisibility(Context ctx) {
         executeConnectionDependentAction(ctx, new Runnable() {
             @Override
@@ -105,6 +110,7 @@ public final class HudManager {
         });
     }
 
+    @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void removeAll(Context ctx) {
         Set<Hud> allHuds = new HashSet<Hud>(SCHEDULED.keySet());
         for (Hud hud : allHuds) {

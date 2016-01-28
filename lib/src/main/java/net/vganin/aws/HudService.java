@@ -4,11 +4,13 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -127,8 +129,12 @@ public final class HudService extends Service {
 
         @Override
         public void run() {
-            textUpdate();
-            visibilityUpdate();
+            initViewSpace();
+
+            if (viewSpaceInitialized) {
+                textUpdate();
+                visibilityUpdate();
+            }
         }
     }
 
@@ -137,6 +143,8 @@ public final class HudService extends Service {
 
     private LinearLayout root;
     private TextView debugInfo;
+
+    private boolean viewSpaceInitialized = false;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -147,29 +155,8 @@ public final class HudService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.START | Gravity.BOTTOM;
-
-        root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(10, 10, 10, 10);
-        root.setBackgroundColor(COLOR_SHADE);
-        windowManager.addView(root, params);
-
-        LinearLayout.LayoutParams rootParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        debugInfo = new TextView(this);
-        debugInfo.setTextColor(Color.GREEN);
-        root.addView(debugInfo, rootParams);
+        enforceSystemAlertPermission();
+        initViewSpace();
 
         hudHandler = new IncomingHandler(new ViewUpdater());
         messenger = new Messenger(hudHandler);
@@ -177,8 +164,7 @@ public final class HudService extends Service {
 
     @Override
     public void onDestroy() {
-        WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        windowManager.removeView(root);
+        deInitViewSpace();
 
         hudHandler.removeCallbacksAndMessages(null);
 
@@ -208,6 +194,60 @@ public final class HudService extends Service {
 
     public void visibilityUpdate() {
         debugInfo.setVisibility(hudHandler.debugInfoShown ? View.VISIBLE : View.GONE);
+    }
+
+    private void initViewSpace() {
+        boolean canDrawOverlays = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            canDrawOverlays = Settings.canDrawOverlays(this);
+        }
+
+        if (!viewSpaceInitialized && canDrawOverlays) {
+            WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+            params.gravity = Gravity.START | Gravity.BOTTOM;
+
+            root = new LinearLayout(this);
+            root.setOrientation(LinearLayout.VERTICAL);
+            root.setPadding(10, 10, 10, 10);
+            root.setBackgroundColor(COLOR_SHADE);
+            windowManager.addView(root, params);
+
+            LinearLayout.LayoutParams rootParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            debugInfo = new TextView(this);
+            debugInfo.setTextColor(Color.GREEN);
+            root.addView(debugInfo, rootParams);
+
+            viewSpaceInitialized = true;
+        }
+    }
+
+    private void deInitViewSpace() {
+        if (viewSpaceInitialized) {
+            WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+            windowManager.removeView(root);
+
+            viewSpaceInitialized = false;
+        }
+    }
+
+    private void enforceSystemAlertPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                Intent startingIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                startingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(startingIntent);
+            }
+        }
     }
 }
 
