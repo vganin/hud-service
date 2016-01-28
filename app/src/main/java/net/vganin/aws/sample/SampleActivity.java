@@ -5,9 +5,11 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import net.vganin.aws.DebugTextHud;
 import net.vganin.aws.Hud;
 import net.vganin.aws.HudManager;
 
@@ -70,6 +72,16 @@ public class SampleActivity extends AppCompatActivity {
                 rotation %= 10000; // RotateDrawable.MAX_LEVEL
 
                 return remoteView;
+            }
+        });
+
+        HudManager.add(this, new DebugTextHud(this) {
+            @Override
+            public CharSequence getMessageUpdate() {
+                return DateUtils.formatDateTime(
+                        SampleActivity.this,
+                        System.currentTimeMillis(),
+                        DateUtils.FORMAT_SHOW_TIME);
             }
         });
     }
