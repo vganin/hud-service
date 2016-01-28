@@ -2,7 +2,6 @@ package net.vganin.aws;
 
 import android.app.Service;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
@@ -14,10 +13,9 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.RemoteViews;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -27,43 +25,33 @@ public final class HudService extends Service {
 
     private static final String TAG = HudService.class.getSimpleName();
 
-    private static final char NEW_LINE = '\n';
-    private static final String DELIMITER = "-----------------";
-
-    private static final int COLOR_SHADE = 0x55000000;
-
     private static class IncomingHandler extends Handler {
 
-        private final class DeathAwareMessage implements IBinder.DeathRecipient {
+        private final class DeathAwareView implements IBinder.DeathRecipient {
 
             public final IBinder token;
-            public String text;
+            public RemoteViews remoteView;
 
-            public DeathAwareMessage(IBinder token) {
+            public DeathAwareView(IBinder token) {
                 this.token = token;
             }
 
-            public void updateText(String text) {
-                this.text = text;
+            public void update(RemoteViews remoteView) {
+                this.remoteView = remoteView;
             }
 
             @Override
             public void binderDied() {
-                messages.remove(token);
+                remoteViews.remove(token);
                 invokeOnUpdateSafely();
-            }
-
-            @Override
-            public String toString() {
-                return text;
             }
         }
 
-        private final Map<IBinder, DeathAwareMessage> messages = new LinkedHashMap<>();
-
-        private boolean debugInfoShown = true;
+        private final Map<IBinder, DeathAwareView> remoteViews = new LinkedHashMap<>();
 
         private final Runnable onUpdateCallback;
+
+        private boolean viewsAreShown = true;
 
         private IncomingHandler(Runnable onUpdateCallback) {
             this.onUpdateCallback = onUpdateCallback;
@@ -76,15 +64,15 @@ public final class HudService extends Service {
             switch (msg.what) {
                 case Const.MESSAGE_UPDATE_HUD:
                     if (token != null && token.isBinderAlive()) {
-                        String text = msg.getData().getString(Const.EXTRA_MESSAGE);
-                        update(token, text);
+                        RemoteViews remoteViews = msg.getData().getParcelable(Const.EXTRA_MESSAGE);
+                        update(token, remoteViews);
                     }
                     break;
                 case Const.MESSAGE_REMOVE_HUD:
                     remove(token);
                     break;
                 case Const.MESSAGE_TOGGLE_VISIBILITY:
-                    debugInfoShown = !debugInfoShown;
+                    viewsAreShown = !viewsAreShown;
                     break;
             }
 
@@ -96,15 +84,15 @@ public final class HudService extends Service {
             post(onUpdateCallback);
         }
 
-        private void update(IBinder token, String text) {
-            DeathAwareMessage deathAwareMsg;
+        private void update(IBinder token, RemoteViews remoteView) {
+            DeathAwareView deathAwareMsg;
 
-            if (messages.containsKey(token)) {
-                deathAwareMsg = messages.get(token);
+            if (this.remoteViews.containsKey(token)) {
+                deathAwareMsg = this.remoteViews.get(token);
             } else {
-                deathAwareMsg = new DeathAwareMessage(token);
+                deathAwareMsg = new DeathAwareView(token);
 
-                messages.put(token, deathAwareMsg);
+                this.remoteViews.put(token, deathAwareMsg);
 
                 try {
                     token.linkToDeath(deathAwareMsg, 0);
@@ -113,14 +101,14 @@ public final class HudService extends Service {
                 }
             }
 
-            deathAwareMsg.updateText(text);
+            deathAwareMsg.update(remoteView);
         }
 
         private void remove(IBinder token) {
-            if (messages.containsKey(token)) {
-                DeathAwareMessage deathAwareMsg = messages.get(token);
+            if (remoteViews.containsKey(token)) {
+                DeathAwareView deathAwareMsg = remoteViews.get(token);
                 token.unlinkToDeath(deathAwareMsg, 0);
-                messages.remove(token);
+                remoteViews.remove(token);
             }
         }
     }
@@ -132,7 +120,7 @@ public final class HudService extends Service {
             initViewSpace();
 
             if (viewSpaceInitialized) {
-                textUpdate();
+                viewsUpdate();
                 visibilityUpdate();
             }
         }
@@ -142,7 +130,6 @@ public final class HudService extends Service {
     private Messenger messenger;
 
     private LinearLayout root;
-    private TextView debugInfo;
 
     private boolean viewSpaceInitialized = false;
 
@@ -171,29 +158,21 @@ public final class HudService extends Service {
         super.onDestroy();
     }
 
-    public void textUpdate() {
-        StringBuilder sb = new StringBuilder();
-        Collection<IncomingHandler.DeathAwareMessage> messages = hudHandler.messages.values();
+    public void viewsUpdate() {
+        root.removeAllViews();
 
-        int index = 0;
-        int count = messages.size();
+        Collection<IncomingHandler.DeathAwareView> remoteViews = hudHandler.remoteViews.values();
 
-        for (IncomingHandler.DeathAwareMessage message : messages) {
-            sb.append(message);
-
-            sb.append(NEW_LINE);
-            sb.append(DELIMITER);
-
-            if (++index != count) {
-                sb.append(NEW_LINE);
+        for (IncomingHandler.DeathAwareView remoteView : remoteViews) {
+            if (remoteView.remoteView != null) {
+                View view = remoteView.remoteView.apply(this, root);
+                root.addView(view);
             }
         }
-
-        debugInfo.setText(sb);
     }
 
     public void visibilityUpdate() {
-        debugInfo.setVisibility(hudHandler.debugInfoShown ? View.VISIBLE : View.GONE);
+        root.setVisibility(hudHandler.viewsAreShown ? View.VISIBLE : View.GONE);
     }
 
     private void initViewSpace() {
@@ -215,17 +194,7 @@ public final class HudService extends Service {
 
             root = new LinearLayout(this);
             root.setOrientation(LinearLayout.VERTICAL);
-            root.setPadding(10, 10, 10, 10);
-            root.setBackgroundColor(COLOR_SHADE);
             windowManager.addView(root, params);
-
-            LinearLayout.LayoutParams rootParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
-
-            debugInfo = new TextView(this);
-            debugInfo.setTextColor(Color.GREEN);
-            root.addView(debugInfo, rootParams);
 
             viewSpaceInitialized = true;
         }

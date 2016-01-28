@@ -27,7 +27,7 @@ final class HudMessenger {
             try {
                 messenger.send(message);
             } catch (RemoteException e) {
-                Log.e(TAG, "Error during text send", e);
+                Log.e(TAG, "Error during removeViews send", e);
             }
         }
     }
@@ -60,7 +60,7 @@ final class HudMessenger {
     private Message createBaseMessage(Hud hud) {
         Message message = new Message();
         message.getData().putBinder(Const.EXTRA_TOKEN, hud.mToken);
-        message.getData().putString(Const.EXTRA_MESSAGE, hud.getMessage());
+        message.getData().putParcelable(Const.EXTRA_MESSAGE, hud.getUpdate());
         return message;
     }
 

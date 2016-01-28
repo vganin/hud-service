@@ -6,6 +6,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.RemoteViews;
 
 import net.vganin.aws.Hud;
 import net.vganin.aws.HudManager;
@@ -40,14 +41,28 @@ public class SampleActivity extends AppCompatActivity {
             }
         });
 
-        useHud();
+        if (savedInstanceState == null) {
+            useHud();
+        }
     }
 
     private void useHud() {
         HudManager.add(this, new Hud() {
+
+            private final RemoteViews remoteView =
+                    new RemoteViews(getPackageName(), R.layout.remote_layout);
+
+            private int rotation = 0;
+
             @Override
-            public String getMessage() {
-                return data[rand.nextInt(data.length)];
+            public RemoteViews getUpdate() {
+                remoteView.setCharSequence(R.id.text, "setText", data[rand.nextInt(data.length)]);
+                remoteView.setInt(R.id.icon, "setImageLevel", rotation);
+
+                rotation += 1250; // RotateDrawable.MAX_LEVEL / 8
+                rotation %= 10000; // RotateDrawable.MAX_LEVEL
+
+                return remoteView;
             }
         });
     }
