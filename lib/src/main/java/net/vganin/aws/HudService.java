@@ -21,6 +21,17 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Service for displaying HUD entries.
+ * <p>
+ * In order to use it you must add it in AndroidManifest as {@code service}. {@link HudManager} will
+ * communicate to it via explicit intent.
+ * <p>
+ * You must declare {@link android.Manifest.permission#SYSTEM_ALERT_WINDOW} usage in manifest as well.
+ * On Android >= 6 (SKD >= 23) service will deal with runtime permissions itself. You must be prepared
+ * that Android will show 'draw overlays' setting on the first start. Enable permission for your app.
+ * Then the HUDs must show on.
+ */
 public final class HudService extends Service {
 
     private static final String TAG = HudService.class.getSimpleName();

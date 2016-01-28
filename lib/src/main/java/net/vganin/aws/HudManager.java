@@ -19,6 +19,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Communication bridge between client and service.
+ */
 public final class HudManager {
 
     private static class MessageWorker implements Runnable {
@@ -77,6 +80,12 @@ public final class HudManager {
         return messenger != null;
     }
 
+    /**
+     * Adds HUD to overlay zone. One will ask HUD for updates periodically.
+     *
+     * @param ctx Context.
+     * @param hud HUD implementation.
+     */
     @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void add(Context ctx, final Hud hud) {
         executeConnectionDependentAction(ctx, new Runnable() {
@@ -87,6 +96,12 @@ public final class HudManager {
         });
     }
 
+    /**
+     * Removes HUD from overlay zone. One will stop asking for updates from this HUD.
+     *
+     * @param ctx Context.
+     * @param hud HUD implementation.
+     */
     @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void remove(Context ctx, Hud hud) {
         cancel(hud);
@@ -100,6 +115,12 @@ public final class HudManager {
         }
     }
 
+    /**
+     * Toggle entire overlay zone visibility. Client must make something in order to use
+     * this method.
+     *
+     * @param ctx Context.
+     */
     @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void toggleVisibility(Context ctx) {
         executeConnectionDependentAction(ctx, new Runnable() {
@@ -110,9 +131,14 @@ public final class HudManager {
         });
     }
 
+    /**
+     * Removes all HUDs from overlay zone.
+     *
+     * @param ctx Context.
+     */
     @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
     public static void removeAll(Context ctx) {
-        Set<Hud> allHuds = new HashSet<Hud>(SCHEDULED.keySet());
+        Set<Hud> allHuds = new HashSet<>(SCHEDULED.keySet());
         for (Hud hud : allHuds) {
             remove(ctx, hud);
         }
