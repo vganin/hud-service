@@ -1,11 +1,13 @@
 package net.vganin.hud;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.v4.app.BundleCompat;
 import android.util.Log;
 
 final class HudMessenger {
@@ -59,8 +61,9 @@ final class HudMessenger {
 
     private Message createBaseMessage(Hud hud) {
         Message message = new Message();
-        message.getData().putBinder(Const.EXTRA_TOKEN, hud.mToken);
-        message.getData().putParcelable(Const.EXTRA_MESSAGE, hud.getUpdate());
+        Bundle args = message.getData();
+        BundleCompat.putBinder(args, Const.EXTRA_TOKEN, hud.mToken);
+        args.putParcelable(Const.EXTRA_MESSAGE, hud.getUpdate());
         return message;
     }
 
