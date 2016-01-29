@@ -1,4 +1,4 @@
-package net.vganin.aws;
+package net.vganin.hud;
 
 /**
  * Communication protocol between {@link HudManager} and {@link HudService}.

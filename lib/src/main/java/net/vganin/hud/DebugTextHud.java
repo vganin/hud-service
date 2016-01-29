@@ -1,4 +1,4 @@
-package net.vganin.aws;
+package net.vganin.hud;
 
 import android.content.Context;
 import android.widget.RemoteViews;

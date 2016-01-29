@@ -1,4 +1,4 @@
-package net.vganin.aws.sample;
+package net.vganin.hud.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -7,9 +7,9 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import net.vganin.aws.DebugTextHud;
-import net.vganin.aws.Hud;
-import net.vganin.aws.HudManager;
+import net.vganin.hud.DebugTextHud;
+import net.vganin.hud.Hud;
+import net.vganin.hud.HudManager;
 
 import java.util.Random;
 

@@ -1,4 +1,4 @@
-package net.vganin.aws;
+package net.vganin.hud;
 
 import android.app.Service;
 import android.content.Intent;

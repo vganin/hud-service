@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="net.vganin.aws.sample">
+    package="net.vganin.hud.sample">
 
     <!-- HudService uses this to show something. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".SampleActivity"
+            android:name="net.vganin.hud.sample.SampleActivity"
             android:label="@string/title_activity_sample"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -24,7 +24,7 @@
         </activity>
 
         <service
-            android:name="net.vganin.aws.HudService">
+            android:name="net.vganin.hud.HudService">
 
             <intent-filter>
                 <action android:name="net.vganin.aws.action.HUD" />
